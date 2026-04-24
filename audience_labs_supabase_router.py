@@ -12,7 +12,7 @@ Optional environment variables:
   TYPE_SUFFIX          Defaults to "hvac"
   AUDIENCE_PAGE_SIZE   Defaults to 500
   AUDIENCE_PAGE_DELAY  Defaults to 1.5 seconds
-  AUDIENCE_RETRY_WAIT_SECONDS Defaults to 30 seconds
+  AUDIENCE_RETRY_WAIT_SECONDS Defaults to 2 seconds
   GEOCODE_ENABLED      Defaults to false
 
 The Supabase table name is built as:
@@ -44,7 +44,7 @@ TYPE_SUFFIX = os.environ.get("TYPE_SUFFIX", "hvac")
 PAGE_SIZE = int(os.environ.get("AUDIENCE_PAGE_SIZE", "500"))
 AUDIENCE_REQUEST_TIMEOUT = int(os.environ.get("AUDIENCE_REQUEST_TIMEOUT", "180"))
 AUDIENCE_PAGE_DELAY = float(os.environ.get("AUDIENCE_PAGE_DELAY", "1.5"))
-AUDIENCE_RETRY_WAIT_SECONDS = float(os.environ.get("AUDIENCE_RETRY_WAIT_SECONDS", "30"))
+AUDIENCE_RETRY_WAIT_SECONDS = float(os.environ.get("AUDIENCE_RETRY_WAIT_SECONDS", "2"))
 AUDIENCE_MAX_RETRY_WAIT_SECONDS = float(os.environ.get("AUDIENCE_MAX_RETRY_WAIT_SECONDS", "180"))
 AUDIENCE_MAX_RETRIES = int(os.environ.get("AUDIENCE_MAX_RETRIES", "20"))
 GEOCODE_ENABLED = os.environ.get("GEOCODE_ENABLED", "false").strip().lower() in {"1", "true", "yes", "y"}
@@ -52,33 +52,79 @@ GEOCODE_SLEEP_SECONDS = float(os.environ.get("GEOCODE_SLEEP_SECONDS", "0.15"))
 MIN_SKIPTRACE_MATCH_SCORE = int(os.environ.get("MIN_SKIPTRACE_MATCH_SCORE", "5"))
 
 REGION_ZIPS = {
-    "murrieta": ["92562", "92563", "92564", "92595"],
-    "temecula": ["92589", "92590", "92591", "92592", "92593", "92028", "92596", "92536"],
-    "menifee": ["92584", "92585", "92586", "92587", "92548", "92567"],
-    "perris": ["92570", "92571", "92572", "92599"],
-    "riverside": [
-        "92501",
-        "92503",
-        "92504",
-        "92505",
-        "92506",
-        "92507",
-        "92508",
-        "92518",
-        "92324",
-        "92313",
-        "91752",
-        "92860",
+    "el_cajon": ["92019", "92020", "92021", "92022"],
+    "la_mesa": ["91941", "91942", "91943", "91944"],
+    "san_diego": [
+        "92037", "92101", "92102", "92103", "92104", "92105", "92106", "92107", "92108", "92109",
+        "92110", "92111", "92112", "92113", "92114", "92115", "92116", "92117", "92118", "92119",
+        "92120", "92121", "92122", "92123", "92124", "92126", "92127", "92128", "92129", "92130",
+        "92131", "92132", "92134", "92135", "92136", "92137", "92138", "92139", "92140", "92142",
+        "92145", "92147", "92149", "92150", "92152", "92153", "92154", "92155", "92158", "92159",
+        "92160", "92161", "92162", "92163", "92164", "92165", "92166", "92167", "92168", "92169",
+        "92170", "92171", "92172", "92173", "92174", "92175", "92176", "92177", "92179", "92182",
+        "92184", "92186", "92187", "92190", "92191", "92192", "92193", "92195", "92196", "92197",
+        "92198", "92199",
     ],
-    "oceanside": ["92054", "92056", "92057", "92058", "92081", "92083", "92084", "92008", "92010", "92003"],
-    "corona": ["92877", "92878", "92879", "92880", "92881", "92882", "92883", "92870"],
-    "lake_elsinore": ["92530", "92531", "92532"],
-    "moreno_valley": ["92551", "92552", "92553", "92554", "92555", "92556", "92557", "92373", "92223"],
-    "opelika": ["36801", "36804", "36830"],
-    "san_antonio": ["78249", "78258", "78260"],
+    "chula_vista": ["91909", "91910", "91911", "91912", "91913", "91914", "91915", "91921"],
+    "yorba_linda": ["92885", "92886", "92887"],
+    "anaheim": ["92801", "92802", "92803", "92804", "92805", "92806", "92807", "92808", "92809", "92812", "92814", "92815", "92816", "92817", "92825", "92850", "92899"],
+    "anaheim_hills": ["92807", "92808"],
+    "placentia": ["92870", "92871"],
+    "orange": ["92856", "92857", "92859", "92862", "92863", "92864", "92865", "92866", "92867", "92868", "92869"],
+    "santa_ana": ["92701", "92702", "92703", "92704", "92705", "92706", "92707", "92711", "92712", "92728", "92735", "92799"],
+    "tustin": ["92780", "92781", "92782"],
+    "irvine": ["92602", "92603", "92604", "92606", "92612", "92614", "92616", "92617", "92618", "92619", "92620", "92623", "92650", "92697"],
+    "lake_forest": ["92609", "92630"],
+    "mission_viejo": ["92690", "92691", "92692"],
+    "san_clemente": ["92672", "92673", "92674"],
+    "laguna_niguel": ["92607", "92677"],
+    "dana_point": ["92624", "92629"],
+    "aliso_viejo": ["92656"],
+    "laguna_beach": ["92651", "92652"],
+    "newport_beach": ["92658", "92659", "92660", "92661", "92662", "92663"],
+    "costa_mesa": ["92626", "92627", "92628"],
+    "huntington_beach": ["92605", "92615", "92646", "92647", "92648", "92649"],
+    "fountain_valley": ["92708", "92728"],
+    "garden_grove": ["92840", "92841", "92842", "92843", "92844", "92845", "92846"],
+    "fullerton": ["92831", "92832", "92833", "92834", "92835", "92836", "92837", "92838"],
+    "buena_park": ["90620", "90621", "90622", "90623", "90624"],
+    "brea": ["92821", "92822", "92823"],
+    "chino_hills": ["91709"],
+    "chino": ["91708", "91710"],
+    "pomona": ["91766", "91767", "91768", "91769"],
+    "ontario": ["91758", "91761", "91762", "91764"],
+    "claremont": ["91711"],
+    "san_dimas": ["91773"],
+    "la_verne": ["91750"],
+    "upland": ["91784", "91785", "91786"],
+    "rancho_cucamonga": ["91701", "91729", "91730", "91737", "91739"],
+    "fontana": ["92331", "92334", "92335", "92336", "92337"],
+    "rialto": ["92376", "92377"],
+    "san_bernardino": ["92401", "92402", "92403", "92404", "92405", "92406", "92407", "92408", "92410", "92411", "92413", "92415", "92418", "92423", "92427"],
+    "redlands": ["92373", "92374", "92375"],
+    "yucaipa": ["92399"],
+    "beaumont": ["92223"],
+    "banning": ["92220"],
+    "wildomar": ["92595"],
+    "canyon_lake": ["92587"],
+    "winchester": ["92596"],
+    "perris": ["92570", "92571", "92572", "92599"],
+    "fallbrook": ["92028", "92088"],
+    "bonsall": ["92003"],
+    "vista": ["92081", "92083", "92084", "92085"],
+    "carlsbad": ["92008", "92009", "92010", "92011", "92013", "92018"],
+    "san_marcos": ["92069", "92078", "92079", "92096"],
+    "escondido": ["92025", "92026", "92027", "92029", "92030", "92033", "92046"],
+    "encinitas": ["92023", "92024"],
+    "poway": ["92064", "92074"],
+    "del_mar": ["92014"],
 }
 
-ZIP_TO_REGION = {zip_code: region for region, zips in REGION_ZIPS.items() for zip_code in zips}
+REGION_LABELS = {region: region.replace("_", " ").title() for region in REGION_ZIPS}
+ZIP_TO_REGIONS: dict[str, list[str]] = {}
+for region, zips in REGION_ZIPS.items():
+    for zip_code in zips:
+        ZIP_TO_REGIONS.setdefault(zip_code, []).append(region)
 GEOCODE_CACHE: dict[str, tuple[float | None, float | None]] = {}
 
 ALLOWED_COLUMNS = [
@@ -146,6 +192,10 @@ def normalize_phone(value: Any) -> str:
 
 
 def normalize_words(value: Any) -> str:
+    return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9\s]", " ", str(value or "").lower())).strip()
+
+
+def normalize_city_key(value: Any) -> str:
     return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9\s]", " ", str(value or "").lower())).strip()
 
 
@@ -286,6 +336,23 @@ def router_run_timestamp() -> str:
     return f"{run_date.isoformat()}T09:30:00+00:00"
 
 
+def resolve_region(city: str, zip_code: str) -> str:
+    matches = ZIP_TO_REGIONS.get(zip_code, [])
+    if not matches:
+        return ""
+    if len(matches) == 1:
+        return matches[0]
+
+    city_key = normalize_city_key(city)
+    for region in matches:
+        if normalize_city_key(REGION_LABELS[region]) == city_key:
+            return region
+    for region in matches:
+        if normalize_city_key(REGION_LABELS[region]) in city_key:
+            return region
+    return matches[0]
+
+
 def process_lead(row: dict[str, Any]) -> dict[str, Any] | None:
     name = f"{first_present(row, 'FIRST_NAME')} {first_present(row, 'LAST_NAME')}".strip()
     if not name:
@@ -295,16 +362,14 @@ def process_lead(row: dict[str, Any]) -> dict[str, Any] | None:
     city = first_present(row, "PERSONAL_CITY", "SKIPTRACE_CITY")
     state = first_present(row, "PERSONAL_STATE", "SKIPTRACE_STATE")
     zip_code = normalize_zip(first_present(row, "PERSONAL_ZIP", "SKIPTRACE_ZIP"))
+    region = resolve_region(city, zip_code)
     phone_candidate = get_best_phone(row)
     phone = phone_candidate.number if phone_candidate else None
 
-    if not name or not address or not city or not state or not zip_code:
+    if not name or not address or not city or not state or not zip_code or not region:
         return None
 
-    if zip_code not in ZIP_TO_REGION:
-        return None
-
-    if state.upper() not in {"CA", "AL", "TX"}:
+    if state.upper() not in {"CA"}:
         return None
 
     commercial_keywords = r"\b(commercial|business|office|industrial|warehouse|retail|storefront|shop|factory|plant|mall|plaza|center|centre)\b"
@@ -349,6 +414,7 @@ def process_lead(row: dict[str, Any]) -> dict[str, Any] | None:
         "PHONE_DNC_STATUS": phone_candidate.dnc_status if phone_candidate else "",
         "PHONE_MATCH_SCORE": phone_candidate.match_score if phone_candidate else "",
         "PHONE_MATCH_QUALITY": phone_candidate.match_quality if phone_candidate else "",
+        "TARGET_REGION": region,
         "time_stamp": timestamp,
     }
 
@@ -381,7 +447,7 @@ def fetch_audience_rows() -> list[dict[str, Any]]:
             if retries > max_retries:
                 raise RuntimeError(f"Audience Labs kept failing on page {page}: {exc}") from exc
 
-            wait_seconds = min(AUDIENCE_RETRY_WAIT_SECONDS * retries, AUDIENCE_MAX_RETRY_WAIT_SECONDS)
+            wait_seconds = min(AUDIENCE_RETRY_WAIT_SECONDS, AUDIENCE_MAX_RETRY_WAIT_SECONDS)
             current_page_delay = min(max(current_page_delay, AUDIENCE_PAGE_DELAY) + 0.25, 3.0)
             print(
                 f"Audience Labs request failed on page {page}: {exc}. "
@@ -395,7 +461,7 @@ def fetch_audience_rows() -> list[dict[str, Any]]:
             if retries > max_retries:
                 raise RuntimeError(f"Audience Labs kept failing with HTTP {response.status_code}")
 
-            wait_seconds = min(AUDIENCE_RETRY_WAIT_SECONDS * retries, AUDIENCE_MAX_RETRY_WAIT_SECONDS)
+            wait_seconds = min(AUDIENCE_RETRY_WAIT_SECONDS, AUDIENCE_MAX_RETRY_WAIT_SECONDS)
             current_page_delay = min(max(current_page_delay, AUDIENCE_PAGE_DELAY) + 0.25, 3.0)
             print(
                 f"Audience Labs returned HTTP {response.status_code} on page {page}. "
@@ -493,7 +559,7 @@ def route_to_supabase(rows: list[dict[str, Any]]) -> None:
     routed: dict[str, list[dict[str, Any]]] = {region: [] for region in REGION_ZIPS}
 
     for row in rows:
-        region = ZIP_TO_REGION[row["PERSONAL_ZIP"]]
+        region = str(row["TARGET_REGION"])
         routed[region].append({key: row.get(key, "") for key in ALLOWED_COLUMNS})
 
     for region, region_rows in routed.items():

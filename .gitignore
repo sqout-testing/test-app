@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.env
+app-config.local.js
+opportunities.csv
+DATA/
