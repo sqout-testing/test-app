@@ -372,6 +372,11 @@ function sleep(ms){
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+function supabaseRestBaseUrl(){
+  const base = String(CONFIG.supabaseUrl || '').replace(/\/$/, '');
+  return base.endsWith('/rest/v1') ? base : `${base}/rest/v1`;
+}
+
 function isBlank(value){
   return value === null || value === undefined || ['','nan','none','null','undefined'].includes(String(value).trim().toLowerCase());
 }
@@ -610,7 +615,7 @@ function supabaseHeaders(prefer){
 }
 
 async function insertRows(tableName, rows){
-  const url = `${CONFIG.supabaseUrl.replace(/\/$/, '')}/rest/v1/${tableName}?on_conflict=SKIPTRACE_WIRELESS_NUMBERS,time_stamp`;
+  const url = `${supabaseRestBaseUrl()}/${tableName}?on_conflict=SKIPTRACE_WIRELESS_NUMBERS,time_stamp`;
   let total = 0;
 
   for (let index = 0; index < rows.length; index += 500){
@@ -756,10 +761,14 @@ async function loadLeadsFromSupabase(){
   setStatus('Loading live rows from Supabase...');
   const loads = CITY_DEFINITIONS.map(async city => {
     const tableName = `${city.slug}_${CONFIG.typeSuffix}`;
-    const url = `${CONFIG.supabaseUrl.replace(/\/$/, '')}/rest/v1/${tableName}?select=*&order=time_stamp.desc&limit=1000`;
+    const url = `${supabaseRestBaseUrl()}/${tableName}?select=*&order=time_stamp.desc&limit=1000`;
     const response = await fetch(url, { headers:supabaseHeaders() });
     if (!response.ok){
       const text = await response.text();
+      if (response.status === 404){
+        log(`Skipping missing table ${tableName}.`);
+        return [];
+      }
       throw new Error(`Load failed for ${tableName}: HTTP ${response.status} ${text}`);
     }
     const rows = await response.json();
@@ -767,10 +776,25 @@ async function loadLeadsFromSupabase(){
   });
 
   try{
-    allLeads = (await Promise.all(loads)).flat().sort((a, b) => new Date(b.timeStamp || 0) - new Date(a.timeStamp || 0));
-    log(`Loaded ${allLeads.length} total rows from Supabase.`);
+    const results = await Promise.allSettled(loads);
+    const loadedRows = [];
+    let failedLoads = 0;
+
+    for (const result of results){
+      if (result.status === 'fulfilled'){
+        loadedRows.push(...result.value);
+      } else {
+        failedLoads += 1;
+        log(`Supabase table load failed: ${result.reason.message}`);
+      }
+    }
+
+    allLeads = loadedRows.sort((a, b) => new Date(b.timeStamp || 0) - new Date(a.timeStamp || 0));
+    log(`Loaded ${allLeads.length} total rows from Supabase.${failedLoads ? ` ${failedLoads} table loads failed.` : ''}`);
     filterLeads();
-    setStatus('Supabase data loaded.');
+    setStatus(allLeads.length
+      ? `Supabase data loaded. ${allLeads.length.toLocaleString()} rows available.`
+      : 'Supabase load finished, but no rows were returned for the configured tables.');
   }catch(error){
     console.error(error);
     log(`Supabase load failed: ${error.message}`);
