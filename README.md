@@ -23,6 +23,9 @@ Set these GitHub repository secrets before running it:
 - `SUPABASE_URL`
 - `SUPABASE_KEY`
 
+Use the Supabase project URL as `SUPABASE_URL`, for example `https://your-project.supabase.co`.
+The code now accepts either the project root URL or a URL that already ends with `/rest/v1`.
+
 Optional repository variables:
 
 - `TYPE_SUFFIX`

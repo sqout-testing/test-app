@@ -167,6 +167,12 @@ def require_env() -> None:
         sys.exit(f"Missing required environment variable(s): {', '.join(missing)}")
 
 
+def supabase_rest_base_url() -> str:
+    if SUPABASE_URL.endswith("/rest/v1"):
+        return SUPABASE_URL
+    return f"{SUPABASE_URL}/rest/v1"
+
+
 def is_blank(value: Any) -> bool:
     return value is None or str(value).strip().lower() in {"", "nan", "none", "null"}
 
@@ -537,7 +543,7 @@ def supabase_headers(prefer: str | None = None) -> dict[str, str]:
 
 
 def insert_rows(table_name: str, rows: list[dict[str, Any]]) -> int:
-    url = f"{SUPABASE_URL}/rest/v1/{table_name}?on_conflict=SKIPTRACE_WIRELESS_NUMBERS,time_stamp"
+    url = f"{supabase_rest_base_url()}/{table_name}?on_conflict=SKIPTRACE_WIRELESS_NUMBERS,time_stamp"
     total = 0
 
     for start in range(0, len(rows), 500):
