@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Audience Labs to Supabase Sync</title>
+<script src="app-config.js"></script>
 <script src="app-config.local.js"></script>
 <style>
   :root{
@@ -147,14 +148,14 @@
 <div class="wrap">
   <section class="hero">
     <h1>Audience Labs to Supabase Sync</h1>
-    <p class="sub">Single local HTML file that fetches Audience Labs rows, filters them to your target ZIP codes, writes them into city-specific Supabase tables, and previews the synced leads.</p>
+    <p class="sub">Static dashboard that automatically loads synced Audience Labs leads from Supabase and previews the live results by city.</p>
   </section>
 
   <section class="grid">
     <div class="card pad span-8">
       <div class="btn-row" style="justify-content:space-between;align-items:center;margin-bottom:16px">
-        <div class="pill">Standalone local mode</div>
-        <div class="pill">Local override config</div>
+        <div class="pill">Vercel-ready static mode</div>
+        <div class="pill">Auto-load from Supabase</div>
       </div>
       <div class="controls">
         <div>
@@ -180,11 +181,11 @@
         </div>
       </div>
       <div class="btn-row" style="margin-top:16px">
-        <button class="btn-primary" id="sync-btn" type="button">Fetch Audience Labs and Write to Supabase</button>
+        <button class="btn-primary" id="sync-btn" type="button">GitHub Action Sync Only</button>
         <button class="btn-secondary" id="reload-btn" type="button">Reload From Supabase</button>
         <button class="btn-secondary" id="export-btn" type="button">Export Filtered CSV</button>
       </div>
-      <p class="hint" style="margin-top:14px">For GitHub-safe usage, keep secrets out of this file. Put your real browser config in `app-config.local.js`, which is ignored by `.gitignore`. The Audience ID is already hardcoded from your router. One likely typo from your list was normalized from `2856` to `92856` for Orange, CA.</p>
+      <p class="hint" style="margin-top:14px">This deployed page reads directly from Supabase using the public anon key in `app-config.js`, and refreshes automatically. Audience Labs syncing should run through GitHub Actions, not from the browser. One likely typo from your list was normalized from `2856` to `92856` for Orange, CA.</p>
     </div>
 
     <div class="card pad span-4">
@@ -204,7 +205,7 @@
 
     <div class="card pad span-4">
       <strong style="display:block;margin-bottom:12px">Sync Status</strong>
-      <div id="sync-status" class="hint">Idle. Ready to fetch target ZIP codes and upsert into Supabase.</div>
+      <div id="sync-status" class="hint">Loading live rows from Supabase.</div>
       <div style="margin-top:14px" class="hint">
         Target state: <span class="mono">CA</span><br>
         Audience page size: <span class="mono" id="page-size-view"></span><br>
@@ -637,60 +638,8 @@ async function insertRows(tableName, rows){
 }
 
 async function syncAudienceToSupabase(){
-  logEl.textContent = 'Starting sync...';
-  setStatus('Fetching Audience Labs and routing by configured city ZIPs...');
-  const syncButton = document.getElementById('sync-btn');
-  syncButton.disabled = true;
-
-  try{
-    if (CONFIG.audienceApiKey.includes('REPLACE_WITH') || CONFIG.supabaseUrl.includes('REPLACE_WITH') || CONFIG.supabaseKey.includes('REPLACE_WITH')){
-      throw new Error('Update the CONFIG object with real Audience Labs and Supabase credentials first.');
-    }
-
-    const rawRows = await fetchAudienceRows();
-    if (!rawRows.length){
-      setStatus('No Audience Labs rows were returned.');
-      log('No raw rows returned from Audience Labs.');
-      return;
-    }
-
-    const cleanRows = cleanAndDedupe(rawRows);
-    if (!cleanRows.length){
-      setStatus('No valid rows remained after target ZIP filtering.');
-      log('No rows remained after validation and ZIP filtering.');
-      return;
-    }
-
-    const routed = CITY_DEFINITIONS.reduce((acc, city) => {
-      acc[city.slug] = [];
-      return acc;
-    }, {});
-
-    for (const row of cleanRows){
-      const payload = {};
-      for (const key of ALLOWED_COLUMNS) payload[key] = row[key] ?? '';
-      routed[row.region].push(payload);
-    }
-
-    for (const city of CITY_DEFINITIONS){
-      const regionRows = routed[city.slug];
-      if (!regionRows.length) continue;
-      const tableName = `${city.slug}_${CONFIG.typeSuffix}`;
-      log(`Writing ${regionRows.length} rows to ${tableName}.`);
-      const inserted = await insertRows(tableName, regionRows);
-      log(`Inserted ${inserted} rows into ${tableName}.`);
-    }
-
-    setStatus('Sync finished. Reloading from Supabase...');
-    await loadLeadsFromSupabase();
-    setStatus('Sync complete.');
-  }catch(error){
-    console.error(error);
-    log(`Sync failed: ${error.message}`);
-    setStatus(`Sync failed: ${error.message}`);
-  }finally{
-    syncButton.disabled = false;
-  }
+  log('Browser sync is disabled. Run the GitHub Action to pull from Audience Labs, then reload this page.');
+  setStatus('Browser sync disabled. Use the GitHub Action for Audience Labs ingestion.');
 }
 
 function rangeHighValue(value){
@@ -891,6 +840,7 @@ document.getElementById('date-filter').addEventListener('change', filterLeads);
 populateCityFilter();
 renderTable();
 loadLeadsFromSupabase();
+setInterval(loadLeadsFromSupabase, 60000);
 </script>
 </body>
 </html>
