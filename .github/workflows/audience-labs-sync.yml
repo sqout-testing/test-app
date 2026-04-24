@@ -1,0 +1,44 @@
+name: Audience Labs Sync
+
+on:
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    env:
+      AUDIENCE_LABS_API_KEY: ${{ secrets.AUDIENCE_LABS_API_KEY }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      TYPE_SUFFIX: ${{ vars.TYPE_SUFFIX || 'hvac' }}
+      AUDIENCE_PAGE_SIZE: ${{ vars.AUDIENCE_PAGE_SIZE || '500' }}
+      AUDIENCE_REQUEST_TIMEOUT: ${{ vars.AUDIENCE_REQUEST_TIMEOUT || '180' }}
+      AUDIENCE_PAGE_DELAY: ${{ vars.AUDIENCE_PAGE_DELAY || '1.5' }}
+      AUDIENCE_RETRY_WAIT_SECONDS: ${{ vars.AUDIENCE_RETRY_WAIT_SECONDS || '2' }}
+      AUDIENCE_MAX_RETRY_WAIT_SECONDS: ${{ vars.AUDIENCE_MAX_RETRY_WAIT_SECONDS || '180' }}
+      AUDIENCE_MAX_RETRIES: ${{ vars.AUDIENCE_MAX_RETRIES || '20' }}
+      GEOCODE_ENABLED: ${{ vars.GEOCODE_ENABLED || 'false' }}
+      GEOCODE_SLEEP_SECONDS: ${{ vars.GEOCODE_SLEEP_SECONDS || '0.15' }}
+      MIN_SKIPTRACE_MATCH_SCORE: ${{ vars.MIN_SKIPTRACE_MATCH_SCORE || '5' }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Validate required secrets
+        run: |
+          test -n "$AUDIENCE_LABS_API_KEY"
+          test -n "$SUPABASE_URL"
+          test -n "$SUPABASE_KEY"
+
+      - name: Run Audience Labs sync
+        run: python audience_labs_supabase_router.py
