@@ -10,7 +10,7 @@ Required environment variables:
 
 Optional environment variables:
   AUDIENCE_IDS         Comma-separated Audience Labs list IDs. Defaults to the
-                       four IDs below.
+                       single ID below.
   TYPE_SUFFIX          Defaults to "hvac"
   AUDIENCE_PAGE_SIZE   Defaults to 500
   AUDIENCE_PAGE_DELAY  Defaults to 1.5 seconds
@@ -42,10 +42,7 @@ SUPABASE_URL = (os.environ.get("SUPABASE_URL") or "").rstrip("/")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 
 DEFAULT_AUDIENCE_IDS = [
-    "163800d0-517f-4aa0-9aad-7672fb40950e",
-    "eced91ce-c368-4c95-a1a3-229cf8841f5d",
-    "e151583c-39cc-4cd0-927c-0a66e813b6fa",
-    "fcacd9c3-d065-43d3-b2d0-1211d3f7aeba",
+    "9b029602-363e-47d4-b5a1-8856af07589f",
 ]
 AUDIENCE_IDS = [
     audience_id.strip()
